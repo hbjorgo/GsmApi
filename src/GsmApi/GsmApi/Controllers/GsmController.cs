@@ -1,8 +1,9 @@
-﻿using HeboTech.ATLib.Inputs;
+﻿using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Modems;
-using HeboTech.ATLib.Results;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
 
 namespace GsmApi.Controllers
 {
@@ -20,15 +21,24 @@ namespace GsmApi.Controllers
         }
 
         [HttpPost("Sms")]
-        public IActionResult SendSms([FromBody] SendSmsDto dto)
+        public async Task<IActionResult> SendSmsAsync([FromBody] SendSmsDto dto)
         {
-            SmsReference reference = modem.SendSMS(new PhoneNumber(dto.PhoneNumber), dto.Message);
-            if (reference == null)
+            try
             {
-                _logger.LogError($"Error sending SMS. Phone number: {dto.PhoneNumber}. Message: {dto.Message}");
-                return StatusCode(503, "Error sending SMS");
+                SmsReference reference = await modem.SendSmsAsync(new PhoneNumber(dto.PhoneNumber), dto.Message);
+                if (reference == null)
+                {
+                    _logger.LogError($"Error sending SMS. Phone number: {dto.PhoneNumber}. Message: {dto.Message}");
+                    return StatusCode(503, "Error sending SMS");
+                }
+                Console.WriteLine("SMS sent");
+                return new OkObjectResult(reference.MessageReference);
             }
-            return new OkObjectResult(reference.MessageReference);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unable to send SMS");
+                return StatusCode(500, "Unable to send SMS");
+            }
         }
     }
 }

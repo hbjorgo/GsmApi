@@ -1,9 +1,7 @@
-using HeboTech.ATLib.Communication;
-using HeboTech.ATLib.Inputs;
+using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Modems;
-using HeboTech.ATLib.Modems.Adafruit;
+using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Parsers;
-using HeboTech.ATLib.Results;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -32,32 +30,37 @@ namespace GsmApi
             services.AddSingleton<IModem>(x =>
             {
                 var config = x.GetRequiredService<IOptions<GsmConfiguration>>().Value;
+                Console.WriteLine("Gsm Configuration read");
 
-                SerialPort serialPort = new SerialPort(config.SerialPort, config.BaudRate, Parity.None, 8, StopBits.One);
+                SerialPort serialPort = new SerialPort(config.SerialPort, config.BaudRate, Parity.None, 8, StopBits.One)
+                {
+                    Handshake = Handshake.RequestToSend
+                };
                 Console.WriteLine("Opening serial port...");
                 serialPort.Open();
                 Console.WriteLine("Serialport opened");
 
-                ICommunicator comm = new SerialPortCommunicator(serialPort);
-                AtChannel atChannel = new AtChannel(comm);
-                AdafruitFona3G modem = new AdafruitFona3G(atChannel);
+                AtChannel atChannel = new(serialPort.BaseStream);
+                DWM222 modem = new(atChannel);
 
-                modem.DisableEcho();
+                modem.DisableEchoAsync().Wait();
 
-                var simStatus = modem.GetSimStatus();
+                var simStatus = modem.GetSimStatusAsync().Result;
                 Console.WriteLine($"SIM Status: {simStatus}");
-
-                var remainingCodeAttemps = modem.GetRemainingPinPukAttempts();
-                Console.WriteLine($"Remaining attempts: {remainingCodeAttemps}");
 
                 if (simStatus == SimStatus.SIM_PIN)
                 {
-                    var simPinStatus = modem.EnterSimPin(new PersonalIdentificationNumber(config.PinCode));
+                    var simPinStatus = modem.EnterSimPinAsync(new PersonalIdentificationNumber(config.PinCode)).Result;
                     Console.WriteLine($"SIM PIN Status: {simPinStatus}");
 
-                    simStatus = modem.GetSimStatus();
+                    simStatus = modem.GetSimStatusAsync().Result;
                     Console.WriteLine($"SIM Status: {simStatus}");
                 }
+
+                var smsTextFormatResult = modem.SetSmsMessageFormatAsync(SmsTextFormat.Text).Result;
+                Console.WriteLine($"Setting SMS text format: {smsTextFormatResult}");
+
+                Console.WriteLine("### Modem initialized ###");
 
                 return modem;
             });
@@ -75,9 +78,10 @@ namespace GsmApi
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "GsmApi v1"));
             }
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "GsmApi v1"));
 
             app.UseRouting();
 
