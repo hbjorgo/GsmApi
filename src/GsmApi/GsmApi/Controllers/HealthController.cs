@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System;
+﻿using HeboTech.TimeService;
+using Microsoft.AspNetCore.Mvc;
 
 namespace GsmApi.Controllers
 {
@@ -10,7 +10,7 @@ namespace GsmApi.Controllers
         [HttpGet]
         public IActionResult GetStatus()
         {
-            return new OkObjectResult($"Alive @ {DateTime.Now}");
+            return new OkObjectResult($"Alive @ {TimeService.Now}");
         }
     }
 }

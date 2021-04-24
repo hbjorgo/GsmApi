@@ -2,6 +2,7 @@ using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Parsers;
+using HeboTech.TimeService;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -26,11 +27,13 @@ namespace GsmApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            TimeService.Set(TimeProviders.SystemTimeUtc);
             services.Configure<GsmConfiguration>(Configuration.GetSection("GsmConfiguration"));
             services.AddSingleton<IModem>(x =>
             {
                 var config = x.GetRequiredService<IOptions<GsmConfiguration>>().Value;
                 Console.WriteLine("Gsm Configuration read");
+                Console.WriteLine(config);
 
                 SerialPort serialPort = new SerialPort(config.SerialPort, config.BaudRate, Parity.None, 8, StopBits.One)
                 {
@@ -59,6 +62,9 @@ namespace GsmApi
 
                 var smsTextFormatResult = modem.SetSmsMessageFormatAsync(SmsTextFormat.Text).Result;
                 Console.WriteLine($"Setting SMS text format: {smsTextFormatResult}");
+
+                var smsIndication = modem.SetNewSmsIndication(2, 1, 0, 0, 0).Result;
+                Console.WriteLine($"SMS indication: {smsIndication}");
 
                 Console.WriteLine("### Modem initialized ###");
 
