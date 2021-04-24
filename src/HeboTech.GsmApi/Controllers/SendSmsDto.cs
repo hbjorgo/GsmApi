@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GsmApi.Controllers
+namespace HeboTech.GsmApi.Controllers
 {
     public class SendSmsDto
     {

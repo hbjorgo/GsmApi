@@ -13,7 +13,7 @@ using Microsoft.OpenApi.Models;
 using System;
 using System.IO.Ports;
 
-namespace GsmApi
+namespace HeboTech.GsmApi
 {
     public class Startup
     {
@@ -27,7 +27,7 @@ namespace GsmApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            TimeService.Set(TimeProviders.SystemTimeUtc);
+            TimeService.TimeService.Set(TimeProviders.SystemTimeUtc);
             services.Configure<GsmConfiguration>(Configuration.GetSection("GsmConfiguration"));
             services.AddSingleton<IModem>(x =>
             {

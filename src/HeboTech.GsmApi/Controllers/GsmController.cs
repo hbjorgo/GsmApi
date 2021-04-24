@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace GsmApi.Controllers
+namespace HeboTech.GsmApi.Controllers
 {
     [ApiController]
     [Route("Gsm")]
@@ -34,7 +34,7 @@ namespace GsmApi.Controllers
                     _logger.LogError($"Error sending SMS. Phone number: {dto.PhoneNumber}. Message: {dto.Message}");
                     return StatusCode(503, "Error sending SMS");
                 }
-                Console.WriteLine($"{TimeService.Now} - SMS sent");
+                Console.WriteLine($"{TimeService.TimeService.Now} - SMS sent");
                 return new OkObjectResult(reference.MessageReference);
             }
             catch (Exception ex)

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 
-namespace GsmApi
+namespace HeboTech.GsmApi
 {
     public class Program
     {

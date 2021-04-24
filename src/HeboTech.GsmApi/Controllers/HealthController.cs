@@ -1,7 +1,7 @@
 ﻿using HeboTech.TimeService;
 using Microsoft.AspNetCore.Mvc;
 
-namespace GsmApi.Controllers
+namespace HeboTech.GsmApi.Controllers
 {
     [ApiController]
     [Route("Health")]
@@ -10,7 +10,7 @@ namespace GsmApi.Controllers
         [HttpGet]
         public IActionResult GetStatus()
         {
-            return new OkObjectResult($"Alive @ {TimeService.Now}");
+            return new OkObjectResult($"Alive @ {TimeService.TimeService.Now}");
         }
     }
 }

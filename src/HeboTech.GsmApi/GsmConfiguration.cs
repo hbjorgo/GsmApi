@@ -1,4 +1,4 @@
-﻿namespace GsmApi
+﻿namespace HeboTech.GsmApi
 {
     public class GsmConfiguration
     {
