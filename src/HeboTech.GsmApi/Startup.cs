@@ -35,7 +35,7 @@ namespace HeboTech.GsmApi
                 Console.WriteLine("Gsm Configuration read");
                 Console.WriteLine(config);
 
-                SerialPort serialPort = new SerialPort(config.SerialPort, config.BaudRate, Parity.None, 8, StopBits.One)
+                SerialPort serialPort = new(config.SerialPort, config.BaudRate, Parity.None, 8, StopBits.One)
                 {
                     Handshake = Handshake.RequestToSend
                 };
@@ -43,15 +43,15 @@ namespace HeboTech.GsmApi
                 serialPort.Open();
                 Console.WriteLine("Serialport opened");
 
-                AtChannel atChannel = new(serialPort.BaseStream);
+                AtChannel atChannel = AtChannel.Create(serialPort.BaseStream);
                 DWM222 modem = new(atChannel);
 
                 modem.DisableEchoAsync().Wait();
 
-                var simStatus = modem.GetSimStatusAsync().Result;
+                ModemResponse<SimStatus> simStatus = modem.GetSimStatusAsync().Result;
                 Console.WriteLine($"SIM Status: {simStatus}");
 
-                if (simStatus == SimStatus.SIM_PIN)
+                if (simStatus.Result == SimStatus.SIM_PIN)
                 {
                     var simPinStatus = modem.EnterSimPinAsync(new PersonalIdentificationNumber(config.PinCode)).Result;
                     Console.WriteLine($"SIM PIN Status: {simPinStatus}");

@@ -1,6 +1,7 @@
-﻿using HeboTech.ATLib.DTOs;
+﻿using HeboTech.ATLib.CodingSchemes;
+using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Modems;
-using HeboTech.TimeService;
+using HeboTech.ATLib.Parsers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -14,6 +15,9 @@ namespace HeboTech.GsmApi.Controllers
     [Route("Gsm")]
     public class GsmController : ControllerBase
     {
+        private readonly SmsTextFormat smsTextFormat = SmsTextFormat.PDU;
+        private readonly CodingScheme codingScheme = CodingScheme.UCS2;
+
         private readonly ILogger<GsmController> _logger;
         private readonly IModem modem;
 
@@ -28,14 +32,23 @@ namespace HeboTech.GsmApi.Controllers
         {
             try
             {
-                SmsReference reference = await modem.SendSmsAsync(new PhoneNumber(dto.PhoneNumber), dto.Message);
-                if (reference == null)
+                ModemResponse<SmsReference> response = null;
+                switch (smsTextFormat)
+                {
+                    case SmsTextFormat.PDU:
+                        response = await modem.SendSmsInPduFormatAsync(new PhoneNumber(dto.PhoneNumber), dto.Message, codingScheme);
+                        break;
+                    case SmsTextFormat.Text:
+                        response = await modem.SendSmsInTextFormatAsync(new PhoneNumber(dto.PhoneNumber), dto.Message);
+                        break;
+                }
+                if (response != null || !response.IsSuccess)
                 {
                     _logger.LogError($"Error sending SMS. Phone number: {dto.PhoneNumber}. Message: {dto.Message}");
                     return StatusCode(503, "Error sending SMS");
                 }
                 Console.WriteLine($"{TimeService.TimeService.Now} - SMS sent");
-                return new OkObjectResult(reference.MessageReference);
+                return new OkObjectResult(response.Result.MessageReference);
             }
             catch (Exception ex)
             {
@@ -50,7 +63,8 @@ namespace HeboTech.GsmApi.Controllers
         {
             try
             {
-                IList<SmsWithIndex> smss = await modem.ListSmssAsync(SmsStatus.ALL);
+                ModemResponse<List<SmsWithIndex>> result = await modem.ListSmssAsync(SmsStatus.ALL);
+                List<SmsWithIndex> smss = new();
                 if (senderNumber != null)
                     smss = smss.Where(x => x.Sender.Number == senderNumber).ToList();
                 return new OkObjectResult(smss);
@@ -68,15 +82,15 @@ namespace HeboTech.GsmApi.Controllers
         {
             try
             {
-                Sms sms = await modem.ReadSmsAsync(index);
-                if (sms == null)
+                var sms = await modem.ReadSmsAsync(index, smsTextFormat);
+                if (sms == null || !sms.IsSuccess)
                     return NotFound();
 
                 return new OkObjectResult(new
                 {
-                    Message = sms.Message,
-                    ReceiveTime = sms.ReceiveTime,
-                    Sender = sms.Sender.Number,
+                    Message = sms.Result.Message,
+                    ReceiveTime = sms.Result.ReceiveTime,
+                    Sender = sms.Result.Sender.Number,
                 });
             }
             catch (Exception ex)
@@ -92,8 +106,8 @@ namespace HeboTech.GsmApi.Controllers
         {
             try
             {
-                CommandStatus status = await modem.DeleteSmsAsync(index);
-                if (status == CommandStatus.ERROR)
+                ModemResponse status = await modem.DeleteSmsAsync(index);
+                if (!status.IsSuccess)
                     return StatusCode(500, "Unable to delete SMS");
 
                 return NoContent();
