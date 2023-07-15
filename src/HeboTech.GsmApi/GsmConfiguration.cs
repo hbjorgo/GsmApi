@@ -8,7 +8,7 @@
 
         public override string ToString()
         {
-            return $"Configuration: Port:{SerialPort}, Baudrate: {BaudRate}, PinCode: {PinCode}";
+            return $"Configuration: Port: {SerialPort}, Baudrate: {BaudRate}, PinCode: {PinCode}";
         }
     }
 }

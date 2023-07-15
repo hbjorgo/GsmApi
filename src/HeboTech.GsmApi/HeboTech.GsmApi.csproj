@@ -8,6 +8,7 @@
   <ItemGroup>
     <PackageReference Include="HeboTech.ATLib" Version="6.0.2" />
     <PackageReference Include="HeboTech.TimeService" Version="1.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Include="System.IO.Ports" Version="7.0.0" />
   </ItemGroup>

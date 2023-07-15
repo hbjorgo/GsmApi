@@ -1,5 +1,4 @@
-﻿using HeboTech.ATLib.CodingSchemes;
-using HeboTech.ATLib.DTOs;
+﻿using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Parsers;
 using Microsoft.AspNetCore.Mvc;
@@ -15,9 +14,6 @@ namespace HeboTech.GsmApi.Controllers
     [Route("Gsm")]
     public class GsmController : ControllerBase
     {
-        private readonly SmsTextFormat smsTextFormat = SmsTextFormat.PDU;
-        private readonly CodingScheme codingScheme = CodingScheme.UCS2;
-
         private readonly ILogger<GsmController> _logger;
         private readonly IModem modem;
 
@@ -33,18 +29,18 @@ namespace HeboTech.GsmApi.Controllers
             try
             {
                 ModemResponse<SmsReference> response = null;
-                switch (smsTextFormat)
+                switch (Program.SmsTextFormat)
                 {
                     case SmsTextFormat.PDU:
-                        response = await modem.SendSmsInPduFormatAsync(new PhoneNumber(dto.PhoneNumber), dto.Message, codingScheme);
+                        response = await modem.SendSmsInPduFormatAsync(new PhoneNumber(dto.PhoneNumber), dto.Message, Program.CodingScheme);
                         break;
                     case SmsTextFormat.Text:
                         response = await modem.SendSmsInTextFormatAsync(new PhoneNumber(dto.PhoneNumber), dto.Message);
                         break;
                 }
-                if (response != null || !response.IsSuccess)
+                if (response == null || !response.IsSuccess)
                 {
-                    _logger.LogError($"Error sending SMS. Phone number: {dto.PhoneNumber}. Message: {dto.Message}");
+                    _logger.LogError($"Error sending SMS. Errormessage:{response?.ErrorMessage} Phone number: {dto.PhoneNumber}. Message: {dto.Message}");
                     return StatusCode(503, "Error sending SMS");
                 }
                 Console.WriteLine($"{TimeService.TimeService.Now} - SMS sent");
@@ -82,7 +78,7 @@ namespace HeboTech.GsmApi.Controllers
         {
             try
             {
-                var sms = await modem.ReadSmsAsync(index, smsTextFormat);
+                var sms = await modem.ReadSmsAsync(index, Program.SmsTextFormat);
                 if (sms == null || !sms.IsSuccess)
                     return NotFound();
 
